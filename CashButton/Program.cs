@@ -29,6 +29,8 @@ internal sealed class CashButtonForm : Form
     private readonly ContextMenuStrip trayMenu;
     private AppSettings settings;
     private bool allowExit;
+    private Point dragStart;
+    private bool dragStarted;
 
     public CashButtonForm()
     {
@@ -58,7 +60,8 @@ internal sealed class CashButtonForm : Form
         openButton.FlatAppearance.MouseOverBackColor = Color.FromArgb(19, 125, 78);
         openButton.FlatAppearance.MouseDownBackColor = Color.FromArgb(15, 85, 57);
         openButton.Click += async (_, _) => await OpenDrawerAsync();
-        openButton.MouseDown += DragWindow;
+        openButton.MouseDown += BeginDrag;
+        openButton.MouseMove += ContinueDrag;
         Controls.Add(openButton);
 
         trayMenu = new ContextMenuStrip();
@@ -135,13 +138,29 @@ internal sealed class CashButtonForm : Form
             settings = dialog.SavedSettings;
     }
 
-    private void DragWindow(object? sender, MouseEventArgs e)
+    private void BeginDrag(object? sender, MouseEventArgs e)
     {
-        if (e.Button == MouseButtons.Left)
-        {
-            ReleaseCapture();
-            SendMessage(Handle, 0xA1, (IntPtr)0x2, IntPtr.Zero);
-        }
+        if (e.Button != MouseButtons.Left)
+            return;
+
+        dragStart = e.Location;
+        dragStarted = false;
+    }
+
+    private void ContinueDrag(object? sender, MouseEventArgs e)
+    {
+        if (e.Button != MouseButtons.Left || dragStarted)
+            return;
+
+        int dx = Math.Abs(e.X - dragStart.X);
+        int dy = Math.Abs(e.Y - dragStart.Y);
+        if (dx < SystemInformation.DragSize.Width / 2 &&
+            dy < SystemInformation.DragSize.Height / 2)
+            return;
+
+        dragStarted = true;
+        ReleaseCapture();
+        SendMessage(Handle, 0xA1, (IntPtr)0x2, IntPtr.Zero);
     }
 
     private void RestoreWindow()
