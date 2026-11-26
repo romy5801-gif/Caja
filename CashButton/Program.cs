@@ -139,7 +139,7 @@ internal sealed class CashButtonForm : Form
             if (key.GetValue("CashButton") is not null)
                 key.DeleteValue("CashButton", throwOnMissingValue: false);
             else
-                key.SetValue("CashButton", $"\\"{Application.ExecutablePath}\\"");
+                key.SetValue("CashButton", $"\"{Application.ExecutablePath}\"");
 
             UpdateStartupMenuText();
         }
